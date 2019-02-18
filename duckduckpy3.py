@@ -3,6 +3,8 @@
 import json
 import requests
 from urllib.parse import urlencode
+import sys
+import xml.etree.ElementTree as ET
 
 def search(query, safeSearch=True, html=False, meanings=True):
 
@@ -12,7 +14,7 @@ def search(query, safeSearch=True, html=False, meanings=True):
 
     #Define url params for API searches
     urlParams = {
-            'q' ; query, 
+            'q' : query, 
             'o': 'json', 
             'kp': safeSearch, 
             'no_redirect': '1', 
@@ -28,16 +30,19 @@ def search(query, safeSearch=True, html=False, meanings=True):
     r = requests.get(url)
 
     #jsonify response
-    j = json.loads(r.text)
+    if(urlParams['o'] == 'json'):
+        j = json.loads(r.text)
+        return j
 
-    return Result(j)
+    #or return xml
+    elif(urlParams['o'] == 'x'):
+        x = ET.fromstring(r.text)
+        return x
 
-class Result(object):
+def main():
+    args = sys.argv[1:]
+    args = ' '.join(args)
+    result = search(args)
+    return result
 
-    def __init__(self, json):
-        self.type = {'A' : 'answer', 'D' : 'disambiguation', 'C' : 'catagory',
-                     'N' : 'name', 'E' : 'exclusive', '' : 'nothing'}.get(json.get('Type',''), '')
-
-        self.json = json
-        self.heading = json.get('Heading', '')
-        self.results = [Result(elem) for elem
+main()
